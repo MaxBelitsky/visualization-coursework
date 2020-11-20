@@ -3,8 +3,10 @@
 # Environment setup
 
 Create a python virtual envirnonment with `python -m venv venv`.
+
 Activate the environment with `venv\Scripts\activate.bat` on Windows or `source venv/bin/activate` on Mac or Linux.
-Download the dependencies `pip install -r requirements.txt`. 
+
+Download the dependencies `python -m pip install -r requirements.txt` (Windows) or `pip install -r requirements.txt` (Mac or Linux). 
 
 # Run the app
 
