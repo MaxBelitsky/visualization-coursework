@@ -9,4 +9,5 @@ buff = df.select_dtypes("float64")
 
 df[buff.columns] = imputer.fit_transform(buff)
 
-print(df)
+# Uncomment to save the results as a csv file
+#df.to_csv("Imputed.csv")
