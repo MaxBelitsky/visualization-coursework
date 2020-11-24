@@ -24,35 +24,24 @@ app.layout = html.Div(children=[
     html.Br(),
     html.Br(),
 
-    html.Div(id='Dropdown', children=[
-        dcc.Dropdown(id='dropdown_x',
-        options=[
-            {'label': 'Red Blood Cells', 'value': 'Red blood Cells'},
-            {'label': 'Lymphocytes', 'value': 'Lymphocytes'}
-                ],
-            value=['Red blood Cells'],
-            multi=False,
-            placeholder='Red Blood Cells',
-            style={'width': '45vw', 'margin': 'auto'}
-            ),
+    html.Div([
+        dcc.Dropdown(
+            id='dropdown_x',
+            options=[{'label': 'Red Blood Cells', 'value': 'Red blood Cells'}],
+            value=['Red blood Cells']
+            )], style={'width': '48%', 'display': 'inline-block'}),
 
-        html.Br(),
-
-        dcc.Dropdown(id='dropdown_y',
-        options=[
-            {'label': 'Red Blood Cells', 'value': 'Red blood Cells'},
-            {'label': 'Lymphocytes', 'value': 'Lymphocytes'}
-                ],
-            value=['Lymphocytes'],
-            multi=False,
-            style={'width': '45vw', 'margin': 'auto'}       # 'display': 'inline-block'
-            )
-    ]), 
+    html.Div([
+        dcc.Dropdown(
+            id='dropdown_y',
+            options=[{'label': 'Red Blood Cells', 'value': 'Red blood Cells'}],
+            value='Life expectancy at birth, total (years)'
+            )], style={'width': '48%', 'float': 'right', 'display': 'inline-block'}),
     
     dcc.Graph(
         id='example-graph',
         figure=fig,
-        style={'width': '1200px', 'margin': 'auto'}
+        style={'width': '1400px', 'margin': 'auto'}
     )
 ])
 
