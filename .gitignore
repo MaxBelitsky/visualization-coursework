@@ -1,5 +1,5 @@
 # Personal assignments
-*.personal.*
+personal_assignment
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
