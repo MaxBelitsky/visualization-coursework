@@ -30,7 +30,7 @@ def generate_graph(data, x="Red blood Cells", y=None, type='histogram', *args, *
 
 
 #attributes = df.iloc[:, 1:].columns
-attributes = df.iloc[:, [10, 11]].columns
+attributes = df.iloc[:, [10, 11, 22]].columns
 
 
 # This declares the app's layout
@@ -95,7 +95,7 @@ app.layout = html.Div(children=[
     Input('radio', 'value'))
 def update_figure(x, y, graph_type):
     #if x or y:
-    fig = generate_graph(df, x=x, y=y, type=graph_type, color="SARS-Cov-2 exam result")
+    fig = generate_graph(df, x=x, y=y, type=graph_type)#, color="SARS-Cov-2 exam result")
     fig.update_layout(transition_duration=50)
     return fig
 
@@ -111,7 +111,7 @@ def on_exit(value_x, value_y):
     elif value_y != None and isinstance(value_y, list) and len(value_y) > 1:
         return (False, True)
 
-    return (False, False)
+    return (True, True)
 
 
 
