@@ -43,29 +43,32 @@ def generate_graph(data, x="Red blood Cells", y=None, type='histogram', *args, *
     elif type=="scatter":
         fig = go.Figure()
 
-        # This is done to provide a fillvalue for the zip_longest funtion
-        if len(x) > len(y):
-            previous = x[0]
-        else:
-            previous = y[0]
+        # Plot only if 2 variables are chosen, show an empty plot otherwise
+        if len(y) > 0 and len(x) > 0:
+            
+            # This is done to provide a fillvalue for the zip_longest funtion
+            if len(x) > len(y):
+                previous = y[0]
+            else:
+                previous = x[0]
 
 
-        """colors = data["value"][data["variable"] == "SARS-Cov-2 exam result"].to_numpy()
-        colors = np.where(colors=="positive", "red", colors)
-        colors = np.where(colors=="negative", "blue", colors)"""
+            """colors = data["value"][data["variable"] == "SARS-Cov-2 exam result"].to_numpy()
+            colors = np.where(colors=="positive", "red", colors)
+            colors = np.where(colors=="negative", "blue", colors)"""
 
-        # Loop through the pairs of attributes and add traces to the graph
-        # zip_longest makes sure the number of pairs correspond to the lenght of the lognest of two argumens
-        # The shorter argument is paired with the previous argument
-        for attribute_x, attribute_y in zip_longest(x, y, fillvalue=previous):
-            fig.add_trace(go.Scatter(
-                x=data["value"][data["variable"] == attribute_x],
-                y=data["value"][data["variable"] == attribute_y],
-                name=attribute_x + "-" + attribute_y,
-                mode='markers',
-                #marker=dict(color=colors)
+            # Loop through the pairs of attributes and add traces to the graph
+            # zip_longest makes sure the number of pairs correspond to the lenght of the lognest of two argumens
+            # The shorter argument is paired with the previous argument
+            for attribute_x, attribute_y in zip_longest(x, y, fillvalue=previous):
+                fig.add_trace(go.Scatter(
+                    x=data["value"][data["variable"] == attribute_x],
+                    y=data["value"][data["variable"] == attribute_y],
+                    name=attribute_x + "-" + attribute_y,
+                    mode='markers',
+                    #marker=dict(color=colors)
+                    )
                 )
-            )
         return fig
 
 
