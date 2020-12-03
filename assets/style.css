@@ -1,0 +1,71 @@
+#h1 {
+    text-align: center;
+}
+
+#description {
+    text-align: center;
+}
+
+#dropdown_panel {
+    margin-top: 40px;
+}
+
+#x_axis_label {
+    text-align: left;
+    margin-bottom: 10px; 
+    font-size: 16px;
+}
+
+#y_axis_label {
+    text-align: left;
+    margin-bottom: 10px; 
+    font-size: 16px;
+}
+
+#dropdown_x_container {
+    width: 48%;
+    display: inline-block;
+}
+
+
+#dropdown_y_container {
+    width: 48%;
+    float: right;
+}
+
+
+#main_panel {
+    float: left;
+    margin-top: 0px;
+}
+
+#main-graph {
+    width: 1200px;
+    height: 600px;
+}
+
+#side_panel {
+    margin-top: 48px;
+    background: rgba(0, 128, 0, 0.04);
+}
+
+
+#label_options {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+#radio {
+    width: 10%;
+    float: left;
+    margin-left: 75px;
+    display: block;
+}
+
+#filler {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 8px;
+    visibility: hidden;
+}
