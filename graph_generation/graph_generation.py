@@ -4,6 +4,7 @@ import pandas as pd
 from itertools import zip_longest
 
 
+
 def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *args, **kwargs):
     """ Generates and returns a graph with the specified arguments """
 
@@ -22,6 +23,9 @@ def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *a
             return generate_scatter(data, x[0], y[0], "long", trendline="ols")
 
         return generate_scatter(melted, x, y, "wide")
+
+
+
 
 
 def generate_histogram(data, x, y, data_format="wide", **kwargs):
@@ -46,8 +50,10 @@ def generate_histogram(data, x, y, data_format="wide", **kwargs):
         return px.histogram(data, x, y, **kwargs)
 
 
+
+
 def generate_scatter(data, x, y, data_format="wide", **kwargs):
-    """ Generates and returns a scatter """
+    """ Generates and returns a scatter plot """
     if data_format == "wide":
         fig = go.Figure()
 
@@ -78,6 +84,13 @@ def generate_scatter(data, x, y, data_format="wide", **kwargs):
                     #marker=dict(color=colors)
                     )
                 )
+            fig.update_layout(legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                            ))
         return fig
 
     elif data_format == "long":
