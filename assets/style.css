@@ -73,13 +73,25 @@
 }
 
 
-#label_options {
+#label_graph_type {
     text-align: center;
     font-size: 20px;
     margin-bottom: 8px;
 }
 
-#radio {
+#label_options {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 8px;
+    margin-top: 20px;
+}
+
+#radio_graph_type {
+    margin-left: 30%;
+    display: block;
+}
+
+#checklist_options {
     margin-left: 30%;
     display: block;
 }
