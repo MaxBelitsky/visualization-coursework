@@ -20,7 +20,10 @@ def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *a
 
     elif graph_type=="scatter":
         if len(x) == 1 and len(y) == 1:
-            return generate_scatter(data, x[0], y[0], "long", trendline="ols")
+            return generate_scatter(data, x[0], y[0], "long", color="SARS-Cov-2 exam result", trendline="ols")
+
+        elif len(x) > 1 or len(y) > 1:
+            return generate_scatter_matrix(data, x, y, data_format="long", color="SARS-Cov-2 exam result", **kwargs)
 
         return generate_scatter(melted, x, y, "wide")
 
@@ -95,3 +98,10 @@ def generate_scatter(data, x, y, data_format="wide", **kwargs):
 
     elif data_format == "long":
         return px.scatter(data, x=x, y=y, **kwargs)
+
+
+
+def generate_scatter_matrix(data, x, y, data_format="long", **kwargs):
+    if data_format == "long":
+        dimensions = x + y
+        return px.scatter_matrix(data, dimensions=dimensions, **kwargs)
