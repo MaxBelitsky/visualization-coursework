@@ -4,7 +4,6 @@ import pandas as pd
 from itertools import zip_longest
 
 
-
 def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *args, **kwargs):
     """ Generates and returns a graph with the specified arguments """
 
@@ -19,13 +18,18 @@ def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *a
         return generate_histogram(melted, x, y, "wide")
 
     elif graph_type=="scatter":
+        
+        
         if len(x) == 1 and len(y) == 1:
-            return generate_scatter(data, x[0], y[0], "long", trendline="ols")
+            return generate_scatter(data, x[0], y[0], "long", trendline="ols", **kwargs)
+
+        elif len(x) > 1 or len(y) > 1:
+            return generate_scatter_matrix(data, x, y, data_format="long", **kwargs) #color="SARS-Cov-2 exam result", symbol="SARS-Cov-2 exam result",
 
         return generate_scatter(melted, x, y, "wide")
 
 
-
+################################### HISTOGRAM ###################################
 
 
 def generate_histogram(data, x, y, data_format="wide", **kwargs):
@@ -50,6 +54,7 @@ def generate_histogram(data, x, y, data_format="wide", **kwargs):
         return px.histogram(data, x, y, **kwargs)
 
 
+################################### SCATTER PLOT ###################################
 
 
 def generate_scatter(data, x, y, data_format="wide", **kwargs):
@@ -95,3 +100,12 @@ def generate_scatter(data, x, y, data_format="wide", **kwargs):
 
     elif data_format == "long":
         return px.scatter(data, x=x, y=y, **kwargs)
+
+
+################################### SPLOM ###################################
+
+
+def generate_scatter_matrix(data, x, y, data_format="long", **kwargs):
+    if data_format == "long":
+        dimensions = x + y
+        return px.scatter_matrix(data, dimensions=dimensions, **kwargs)

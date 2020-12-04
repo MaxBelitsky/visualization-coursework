@@ -40,15 +40,21 @@ app.layout = html.Div(children=[
 
     # Side panel container
     html.Div(id='side_panel', children=[
-        html.Label("Options", id="label_options"),
+        html.Label("Graph", id="label_graph_type"),
         dcc.RadioItems(
-            id='radio',
+            id='radio_graph_type',
             options=[{'label': 'Histogram', 'value': 'histogram'}, 
                      #{'label': 'Bar plot', 'value': 'bar'}, 
                      {'label': 'Scatter plot', 'value': 'scatter'}],
             value='histogram',
             ),
         # This is invisible label to fill radio items with background
+        html.Label("Options", id="label_options"),
+        dcc.Checklist(
+            id='checklist_options',
+            options=[],
+            value=[],
+            ),
         html.Label("Filler", id="filler")
         ])
 
@@ -61,9 +67,16 @@ app.layout = html.Div(children=[
     Output('main-graph', 'figure'),
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'),
-    Input('radio', 'value'))
-def update_figure(x, y, graph_type):
-    fig = generate_graph(df, x=x, y=y, graph_type=graph_type)#, color="SARS-Cov-2 exam result")
+    Input('radio_graph_type', 'value'),
+    Input('checklist_options', 'value'))
+def update_figure(x, y, graph_type, options):
+    # Create a dictionary with options and then unpack it in the generate_graph() call
+    opts = dict()
+    for option in options:
+        for key, value in eval(option).items():
+            opts[key] = value
+    
+    fig = generate_graph(df, x=x, y=y, graph_type=graph_type, **opts)#, color="SARS-Cov-2 exam result")
     # Make the transition smoother
     fig.update_layout(transition_duration=50)
     return fig
@@ -91,17 +104,19 @@ def on_exit(value_x, value_y):
 @app.callback(
     Output('dropdown_x', 'options'),
     Output('dropdown_y', 'options'),
-    Input('radio', 'value'),
+    Output('checklist_options', 'options'),
+    Input('radio_graph_type', 'value'),
     Input('dropdown_x', 'value'))
 def dynamic_options(graph_type, value_x):
     if graph_type == "histogram":
         # Only numerical values for the X are possible
-        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [{'label': "None", 'value': ''}])
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [{'label': "None", 'value': ''}], [])
 
     elif graph_type == "scatter":
         # Only numerical values for both X and Y axes are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
-                [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]])
+                [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
 
 if __name__ == '__main__':
