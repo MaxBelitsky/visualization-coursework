@@ -16,11 +16,12 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVI
 
 
 # This declares the app's layout
-app.layout = html.Div(children=[
-    html.H1(children='COVID-19 Visualization Tool', id="h1"),
-    html.Div(children='''
-        This is tool that is intended to visualize COVID-19 data.
-    ''', id="description"),
+app.layout = html.Div(id="main", children=[
+    html.Div(id="head", children=[
+        html.H1(children='COVID-19 Visualization Tool', id="h1"),
+        html.Div(children='''
+        This tool is intended to visualize COVID-19 data.
+    ''', id="description")]),
 
     # Dropdown panel container
     html.Div(id='dropdown_panel', children=[
@@ -36,7 +37,7 @@ app.layout = html.Div(children=[
         ]),
     
     # Main panel container
-    html.Div(id='main_panel', children=[dcc.Graph(id='main-graph')]),
+    html.Div(id='main_panel', children=[dcc.Graph(id='main-graph', config={'displayModeBar': False})]),
 
     # Side panel container
     html.Div(id='side_panel', children=[
@@ -78,7 +79,7 @@ def update_figure(x, y, graph_type, options):
     
     fig = generate_graph(df, x=x, y=y, graph_type=graph_type, **opts)#, color="SARS-Cov-2 exam result")
     # Make the transition smoother
-    fig.update_layout(transition_duration=50)
+    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)')
     return fig
 
 
@@ -106,17 +107,24 @@ def on_exit(value_x, value_y):
     Output('dropdown_y', 'options'),
     Output('checklist_options', 'options'),
     Input('radio_graph_type', 'value'),
-    Input('dropdown_x', 'value'))
-def dynamic_options(graph_type, value_x):
+    Input('dropdown_x', 'value'),
+    Input('dropdown_y', 'value'))
+def dynamic_options(graph_type, value_x, value_y):
     if graph_type == "histogram":
         # Only numerical values for the X are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [{'label': "None", 'value': ''}], [])
 
     elif graph_type == "scatter":
         # Only numerical values for both X and Y axes are possible
+        if len(value_x) == 1 and len(value_y) == 1:
+            return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
+                    [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
+                    {'label': 'Trendline', 'value': '{"trendline": "ols"}'}])
+
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
-                [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
-                [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
+                    [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
 
 if __name__ == '__main__':
