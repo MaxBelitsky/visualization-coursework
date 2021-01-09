@@ -1,5 +1,17 @@
+body, html{
+    margin:0;
+    padding:0;
+  }
+
+#head {
+    background-color: lightsalmon;
+    padding-bottom: 2%;
+
+}
+
 #h1 {
     text-align: center;
+    
 }
 
 #description {
@@ -9,8 +21,9 @@
 /* -------------- DROPDOWN PANEL -------------- */
 
 #dropdown_panel {
-    margin-top: 40px;
+    margin-top: 1px;
     border-width: thin;
+    border-top: 0px;
     padding-top: 10px;
     padding-bottom: 10px;
     padding-right: 10px;
@@ -66,7 +79,7 @@
     border-width: thin;
     padding-top: 38px;
     padding-right: 0.65%;
-    padding-bottom: 380px;
+    padding-bottom: 340px;
     border-style: solid;
     border-color:  lightgrey;
     border-radius: 10px;

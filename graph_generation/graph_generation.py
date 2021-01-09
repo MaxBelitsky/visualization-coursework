@@ -2,6 +2,9 @@ import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
 from itertools import zip_longest
+import plotly.io as pio
+
+pio.templates.default = "plotly_white"
 
 
 def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *args, **kwargs):
@@ -18,13 +21,11 @@ def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *a
         return generate_histogram(melted, x, y, "wide")
 
     elif graph_type=="scatter":
-        
-        
         if len(x) == 1 and len(y) == 1:
-            return generate_scatter(data, x[0], y[0], "long", trendline="ols", **kwargs)
+            return generate_scatter(data, x[0], y[0], "long", **kwargs)
 
         elif len(x) > 1 or len(y) > 1:
-            return generate_scatter_matrix(data, x, y, data_format="long", **kwargs) #color="SARS-Cov-2 exam result", symbol="SARS-Cov-2 exam result",
+            return generate_scatter_matrix(data, x, y, data_format="long", **kwargs) #symbol="SARS-Cov-2 exam result",
 
         return generate_scatter(melted, x, y, "wide")
 
@@ -46,7 +47,7 @@ def generate_histogram(data, x, y, data_format="wide", **kwargs):
                 )
             )
         # Make the histograms visible if they overlap
-        fig.update_layout(barmode='overlay')
+        fig.update_layout(barmode='overlay', xaxis_title="Value", yaxis_title="Frequency")
         fig.update_traces(opacity=0.8)
         return fig
     
@@ -85,8 +86,6 @@ def generate_scatter(data, x, y, data_format="wide", **kwargs):
                     y=data["value"][data["variable"] == attribute_y],
                     name=attribute_x + "-" + attribute_y,
                     mode='markers',
-                    #trendline="ols"
-                    #marker=dict(color=colors)
                     )
                 )
             fig.update_layout(legend=dict(
