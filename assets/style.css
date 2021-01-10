@@ -47,13 +47,25 @@ body, html{
 }
 
 #dropdown_x_container {
-    width: 48%;
+    width: 46%;
     display: inline-block;
 }
 
+#flip_button_container{
+    margin: auto;
+}
+
+#flip_button{
+    margin-top: 20px;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
 
 #dropdown_y_container {
-    width: 48%;
+    width: 46%;
     float: right;
 }
 
@@ -107,6 +119,39 @@ body, html{
 #checklist_options {
     margin-left: 30%;
     display: block;
+}
+
+#label_filter{
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 8px;
+    margin-top: 20px;
+}
+
+#dropdown_filter_container{
+    width: 90%;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+#dropdown_filter{
+    font-size : 80%;
+    white-space: nowrap; 
+}
+
+#color_label{
+    text-align: center;
+}
+
+#color_dropdown_container{
+    width: 90%;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+#color_dropdown{
+    font-size : 80%;
+    white-space: nowrap; 
 }
 
 #filler {
