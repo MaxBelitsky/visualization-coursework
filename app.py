@@ -9,6 +9,7 @@ from graph_generation.graph_generation import generate_graph
 
 # Read the data
 df = pd.read_excel('data/dataset.xlsx').dropna(how="all", axis=1)
+df['select'] = False
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVID-19 Visualization Tool")
@@ -69,8 +70,9 @@ app.layout = html.Div(id="main", children=[
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'),
     Input('radio_graph_type', 'value'),
-    Input('checklist_options', 'value'))
-def update_figure(x, y, graph_type, options):
+    Input('checklist_options', 'value'),
+    Input('main-graph', 'selectedData'))
+def update_figure(x, y, graph_type, options, selectedData):
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
@@ -79,9 +81,18 @@ def update_figure(x, y, graph_type, options):
     
     fig = generate_graph(df, x=x, y=y, graph_type=graph_type, **opts)#, color="SARS-Cov-2 exam result")
     # Make the transition smoother
-    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)')
+    if selectedData:
+        if graph_type == 'scatter':
+            for i in range(len(selectedData['points'])):
+                if df.loc[selectedData['points'][i]['pointIndex'],'select'] == True:
+                    df.loc[selectedData['points'][i]['pointIndex'], 'select'] = False
+                else:
+                    df.loc[selectedData['points'][i]['pointIndex'], 'select'] = True
+            #fig = generate_graph(df, x=x, y=y, graph_type='scatter', color='select', **opts)
+            fig = generate_graph(df, x=x, y=y, graph_type='scatter', **opts)
+    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
+    print(df.select.value_counts())
     return fig
-
 
 # This callback needs to be updated
 # The initial idea was to make the dropdown single if another dropdown is multiple
@@ -120,11 +131,15 @@ def dynamic_options(graph_type, value_x, value_y):
             return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                    {'label': 'Trendline', 'value': '{"trendline": "ols"}'}])
+                    {'label': 'Select Mode', 'value': '{"color": "select"}'},
+                    {'label': 'Trendline', 'value': '{"trendline": "ols"}'}
+                     ])
 
-        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
-                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
+                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
+                     {'label': 'Select Mode', 'value': '{"color": "select"}'}
+                     ])
 
 
 if __name__ == '__main__':
