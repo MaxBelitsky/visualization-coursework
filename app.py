@@ -56,6 +56,10 @@ app.layout = html.Div(id="main", children=[
             options=[],
             value=[],
             ),
+        html.Label("Color", id="color_label"),
+        html.Div(id="color_dropdown_container", children=[
+            dcc.Dropdown(id="color_dropdown", value=None, options=[{'label': "Green", 'value': "green"}])
+        ]),
         html.Label("Filter", id="label_filter"),
         html.Div(id='dropdown_filter_container', children=[
             dcc.Dropdown(id='dropdown_filter', value=None, options=[{'label': value, 'value': value} for value in df.columns[1:]]),
@@ -68,6 +72,9 @@ app.layout = html.Div(id="main", children=[
                 tooltip={"always_visible": False, "placement": "bottom"},
                 updatemode="drag")]),
         # This is invisible label to fill radio items with background
+        html.Div(id="flip_button_container", children=[
+            html.Button("Flip", id="flip_button", n_clicks=0)
+        ]),
         html.Label("Filler", id="filler")
         ])
 
@@ -84,8 +91,15 @@ app.layout = html.Div(id="main", children=[
     Input('checklist_options', 'value'),
     Input("slider_filter", "value"),
     Input("dropdown_filter", "value"),
-    Input('main-graph', 'selectedData'))
-def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData):
+    Input('main-graph', 'selectedData'),
+    Input('color_dropdown', 'value'),
+    Input("flip_button", "n_clicks"))
+def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value):
+    # Flip the axes
+    x_y = [x, y]
+    if flip_value % 2 != 0:
+        x_y = [y, x]
+    
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
@@ -115,11 +129,15 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
                 else:
                     df.loc[selectedData['points'][i]['pointIndex'], 'select'] = True
             
-            fig = generate_graph(data, x=x, y=y, graph_type='scatter', **opts)
+            fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type='scatter', **opts)
     else:
-        fig = generate_graph(data, x=x, y=y, graph_type=graph_type, **opts)
+        fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type=graph_type, **opts)
 
     fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
+    
+    if color_value != None:
+        fig.update_traces(marker={"color": color_value})
+
     #print(df.select.value_counts())
     return fig
 
