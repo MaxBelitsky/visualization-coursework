@@ -49,13 +49,24 @@ app.layout = html.Div(id="main", children=[
                      {'label': 'Scatter plot', 'value': 'scatter'}],
             value='histogram',
             ),
-        # This is invisible label to fill radio items with background
         html.Label("Options", id="label_options"),
         dcc.Checklist(
             id='checklist_options',
             options=[],
             value=[],
             ),
+        html.Label("Filter", id="label_filter"),
+        html.Div(id='dropdown_filter_container', children=[
+            dcc.Dropdown(id='dropdown_filter', value=None, options=[{'label': value, 'value': value} for value in df.columns[1:]]),
+            ]),
+        html.Div(id='slider_filter_container', children=[
+            dcc.RangeSlider(
+                id='slider_filter',
+                step=0.5,
+                allowCross=False,
+                tooltip={"always_visible": False, "placement": "bottom"},
+                updatemode="drag")]),
+        # This is invisible label to fill radio items with background
         html.Label("Filler", id="filler")
         ])
 
@@ -69,17 +80,34 @@ app.layout = html.Div(id="main", children=[
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'),
     Input('radio_graph_type', 'value'),
-    Input('checklist_options', 'value'))
-def update_figure(x, y, graph_type, options):
+    Input('checklist_options', 'value'),
+    Input("slider_filter", "value"),
+    Input("dropdown_filter", "value"))
+def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown):
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
         for key, value in eval(option).items():
             opts[key] = value
     
-    fig = generate_graph(df, x=x, y=y, graph_type=graph_type, **opts)#, color="SARS-Cov-2 exam result")
-    # Make the transition smoother
-    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)')
+    # Filter the data based on the filter values
+    if value_filter_dropdown != None and df[value_filter_dropdown].dtypes == "float64":
+        data = df[(df[value_filter_dropdown] >= value_filter_slider[0]) & (df[value_filter_dropdown] <= value_filter_slider[1])]
+
+    elif value_filter_dropdown != None and (df[value_filter_dropdown].dtypes == "object" or df[value_filter_dropdown].dtypes == "int64"):
+        if df[value_filter_dropdown].dtypes == "int64":
+            indices = list(range(value_filter_slider[0], value_filter_slider[-1]+1))
+        else:
+            indices = df[value_filter_dropdown].dropna().unique()[list(set(value_filter_slider))]
+        data = df[df[value_filter_dropdown].isin(indices)]
+
+    else:
+        data = df
+
+
+    fig = generate_graph(data, x=x, y=y, graph_type=graph_type, **opts)
+    # Make the transition smoother and add a clickmode
+    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
     return fig
 
 
@@ -125,6 +153,35 @@ def dynamic_options(graph_type, value_x, value_y):
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
+
+
+@app.callback(Output("slider_filter", "min"),
+              Output("slider_filter", "max"),
+              Output("slider_filter", "marks"),
+              Output("slider_filter", "value"),
+              Output("slider_filter", "step"),
+              Input("dropdown_filter", "value"))
+def adjust_filter_slider(value):
+    if value != None:
+        if df[value].dtypes == "float64":
+            maximum = df.max()[value]
+            minimum = df.min()[value]
+            middle = minimum + (maximum - minimum)/2
+            return (minimum, maximum, {minimum: "{:.1f}".format(minimum), middle: "{:.1f}".format(middle), maximum: "{:.1f}".format(maximum)}, [minimum, maximum], 0.1)
+
+        elif df[value].dtypes == "int64":
+            maximum = int(df.max()[value])
+            minimum = int(df.min()[value])
+            return [minimum, maximum, {minimum: "{}".format(minimum), maximum: "{}".format(maximum)}, [minimum, maximum], 1]
+
+        elif df[value].dtypes == "object":
+            length = len(df[value].dropna().unique()) - 1
+            marks_dictionary = dict()
+            for i in range(length+1):
+                marks_dictionary[i] = df[value].dropna().unique()[i]
+            return [0, length, marks_dictionary, [0, length], 1]
+
+    return (0, 20, {0: "", 20: ""}, [0, 20], 0.1)
 
 
 if __name__ == '__main__':

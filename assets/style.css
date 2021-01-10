@@ -109,6 +109,24 @@ body, html{
     display: block;
 }
 
+#label_filter{
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 8px;
+    margin-top: 20px;
+}
+
+#dropdown_filter_container{
+    width: 90%;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+#dropdown_filter{
+    font-size : 80%;
+    white-space: nowrap; 
+}
+
 #filler {
     text-align: center;
     font-size: 20px;
