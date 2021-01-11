@@ -7,25 +7,25 @@ import plotly.io as pio
 pio.templates.default = "plotly_white"
 
 
-def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *args, **kwargs):
+def generate_graph(data, x="Red blood Cells", y="Paletes", graph_type='scatter', selected_points=[], *args, **kwargs):
     """ Generates and returns a graph with the specified arguments """
 
     # Return an empty figure if the input is empty
     if x == [] and y==[]:
         return go.Figure()
-
+    
     # Transform the data into wide format
     melted = pd.melt(data, value_vars=data.columns)
 
     if graph_type=="histogram":
-        return generate_histogram(melted, x, y, "wide")
+        return generate_histogram(melted, x, y, "wide", **kwargs)
 
     elif graph_type=="scatter":
         if len(x) == 1 and len(y) == 1:
-            return generate_scatter(data, x[0], y[0], "long", **kwargs)
+            return generate_scatter(data, x[0], y[0], "long", selected_points=selected_points, **kwargs)
 
         elif len(x) > 1 or len(y) > 1:
-            return generate_scatter_matrix(data, x, y, data_format="long", **kwargs) #symbol="SARS-Cov-2 exam result",
+            return generate_scatter_matrix(data, x, y, data_format="long", **kwargs)
 
         return generate_scatter(melted, x, y, "wide")
 
@@ -33,17 +33,26 @@ def generate_graph(data, x="Red blood Cells", y=None, graph_type='histogram', *a
 ################################### HISTOGRAM ###################################
 
 
-def generate_histogram(data, x, y, data_format="wide", **kwargs):
+def generate_histogram(data, x, y, data_format="wide", orientation='v', **kwargs):
     """ Generates and returns a histogram """
     if data_format == "wide":
         fig = go.Figure()
 
         # Iterate over attributes provided in the X Axis dropdown and add traces with histograms
         for attribute in x:
+            # Flip axes depending on orientation
+            if orientation == "v":
+                x_axis = data["value"][data["variable"] == attribute]
+                y_axis = data["variable"][data["variable"] == attribute]
+            else:
+                y_axis = data["value"][data["variable"] == attribute]
+                x_axis = data["variable"][data["variable"] == attribute]
+            
             fig.add_trace(go.Histogram(
-                x=data["value"][data["variable"] == attribute],
-                y=data["variable"][data["variable"] == attribute],
-                name=attribute
+                x=x_axis,
+                y=y_axis,
+                name=attribute,
+                orientation=orientation
                 )
             )
         # Make the histograms visible if they overlap
@@ -58,7 +67,7 @@ def generate_histogram(data, x, y, data_format="wide", **kwargs):
 ################################### SCATTER PLOT ###################################
 
 
-def generate_scatter(data, x, y, data_format="wide", **kwargs):
+def generate_scatter(data, x, y, data_format="wide", selected_points=[], **kwargs):
     """ Generates and returns a scatter plot """
     if data_format == "wide":
         fig = go.Figure()
@@ -98,7 +107,11 @@ def generate_scatter(data, x, y, data_format="wide", **kwargs):
         return fig
 
     elif data_format == "long":
-        return px.scatter(data, x=x, y=y, **kwargs)
+        fig = px.scatter(data, x=x, y=y, **kwargs)
+        # Highlight the selected point with yellow
+        if selected_points:
+            fig.update_traces(selectedpoints=selected_points, selected={'marker': { 'color': 'yellow' }})
+        return fig
 
 
 ################################### SPLOM ###################################
