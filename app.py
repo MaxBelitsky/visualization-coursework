@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 from graph_generation.graph_generation import generate_graph
+from graph_generation.interaction import filter_data, select, flip_axes
 
 
 # Read the data
@@ -33,7 +34,7 @@ app.layout = html.Div(id="main", children=[
 
         html.Div(id="dropdown_y_container", children=[
             html.Label("Select Y Axis", id="y_axis_label"),
-            dcc.Dropdown(id='dropdown_y', value=[])]
+            dcc.Dropdown(id='dropdown_y', value=['Platelets'])]
             )
         ]),
     
@@ -48,7 +49,7 @@ app.layout = html.Div(id="main", children=[
             options=[{'label': 'Histogram', 'value': 'histogram'}, 
                      #{'label': 'Bar plot', 'value': 'bar'}, 
                      {'label': 'Scatter plot', 'value': 'scatter'}],
-            value='histogram',
+            value='scatter',
             ),
         html.Label("Options", id="label_options"),
         dcc.Checklist(
@@ -95,50 +96,32 @@ app.layout = html.Div(id="main", children=[
     Input('color_dropdown', 'value'),
     Input("flip_button", "n_clicks"))
 def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value):
-    # Flip the axes
-    x_y = [x, y]
-    if flip_value % 2 != 0:
-        x_y = [y, x]
-    
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
         for key, value in eval(option).items():
             opts[key] = value
-    
+
+    # Flip the axes
+    x_y = flip_axes(flip_value, opts, graph_type, x, y)
+
+    # Select points
+    select(df, selectedData, graph_type, x, y)
+
     # Filter the data based on the filter values
-    if value_filter_dropdown != None and df[value_filter_dropdown].dtypes == "float64":
-        data = df[(df[value_filter_dropdown] >= value_filter_slider[0]) & (df[value_filter_dropdown] <= value_filter_slider[1])]
+    data = filter_data(df, value_filter_dropdown, value_filter_slider)
 
-    elif value_filter_dropdown != None and (df[value_filter_dropdown].dtypes == "object" or df[value_filter_dropdown].dtypes == "int64"):
-        if df[value_filter_dropdown].dtypes == "int64":
-            indices = list(range(value_filter_slider[0], value_filter_slider[-1]+1))
-        else:
-            indices = df[value_filter_dropdown].dropna().unique()[list(set(value_filter_slider))]
-        data = df[df[value_filter_dropdown].isin(indices)]
-
-    else:
-        data = df
+    # Generate graph
+    selected_points = list(data[data['select'] == True].index)
+    fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type=graph_type, selected_points=selected_points, **opts)
 
     # Make the transition smoother
-    if selectedData:
-        if graph_type == 'scatter':
-            for i in range(len(selectedData['points'])):
-                if df.loc[selectedData['points'][i]['pointIndex'],'select'] == True:
-                    df.loc[selectedData['points'][i]['pointIndex'], 'select'] = False
-                else:
-                    df.loc[selectedData['points'][i]['pointIndex'], 'select'] = True
-            
-            fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type='scatter', **opts)
-    else:
-        fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type=graph_type, **opts)
-
-    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
+    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select') #dragmode='select'
     
+    # Update the color
     if color_value != None:
         fig.update_traces(marker={"color": color_value})
 
-    #print(df.select.value_counts())
     return fig
 
 # This callback needs to be updated
@@ -178,14 +161,14 @@ def dynamic_options(graph_type, value_x, value_y):
             return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                    {'label': 'Select Mode', 'value': '{"color": "select"}'},
+                    #{'label': 'Select Mode', 'value': '{"color": "select"}'},
                     {'label': 'Trendline', 'value': '{"trendline": "ols"}'}
                      ])
 
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                     {'label': 'Select Mode', 'value': '{"color": "select"}'}
+                     #{'label': 'Select Mode', 'value': '{"color": "select"}'}
                      ])
 
 
@@ -216,6 +199,15 @@ def adjust_filter_slider(value):
             return [0, length, marks_dictionary, [0, length], 1]
 
     return (0, 20, {0: "", 20: ""}, [0, 20], 0.1)
+
+
+@app.callback(Output("main-graph", "selectedData"),
+            Input("flip_button", "n_clicks"),
+            Input('checklist_options', 'value'),
+            Input("dropdown_filter", "value"),
+            Input("slider_filter", "value"))
+def clear_data(n_clicks, option, filter, range):
+    return None
 
 
 if __name__ == '__main__':
