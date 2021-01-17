@@ -1,11 +1,10 @@
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 from graph_generation.graph_generation import generate_graph
 from graph_generation.interaction import filter_data, select, flip_axes
+from layout import generate_layout
 
 
 # Read the data
@@ -18,68 +17,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVI
 
 
 # This declares the app's layout
-app.layout = html.Div(id="main", children=[
-    html.Div(id="head", children=[
-        html.H1(children='COVID-19 Visualization Tool', id="h1"),
-        html.Div(children='''
-        This tool is intended to visualize COVID-19 data.
-    ''', id="description")]),
-
-    # Dropdown panel container
-    html.Div(id='dropdown_panel', children=[
-        html.Div(id="dropdown_x_container", children=[
-            html.Label("Select X Axis", id="x_axis_label"),
-            dcc.Dropdown(id='dropdown_x', value=['Red blood Cells'])]
-            ),
-
-        html.Div(id="dropdown_y_container", children=[
-            html.Label("Select Y Axis", id="y_axis_label"),
-            dcc.Dropdown(id='dropdown_y', value=['Platelets'])]
-            )
-        ]),
-    
-    # Main panel container
-    html.Div(id='main_panel', children=[dcc.Graph(id='main-graph', config={'displayModeBar': False})]),
-
-    # Side panel container
-    html.Div(id='side_panel', children=[
-        html.Label("Graph", id="label_graph_type"),
-        dcc.RadioItems(
-            id='radio_graph_type',
-            options=[{'label': 'Histogram', 'value': 'histogram'}, 
-                     #{'label': 'Bar plot', 'value': 'bar'}, 
-                     {'label': 'Scatter plot', 'value': 'scatter'}],
-            value='scatter',
-            ),
-        html.Label("Options", id="label_options"),
-        dcc.Checklist(
-            id='checklist_options',
-            options=[],
-            value=[],
-            ),
-        html.Label("Color", id="color_label"),
-        html.Div(id="color_dropdown_container", children=[
-            dcc.Dropdown(id="color_dropdown", value=None, options=[{'label': "Green", 'value': "green"}])
-        ]),
-        html.Label("Filter", id="label_filter"),
-        html.Div(id='dropdown_filter_container', children=[
-            dcc.Dropdown(id='dropdown_filter', value=None, options=[{'label': value, 'value': value} for value in df.columns[1:]]),
-            ]),
-        html.Div(id='slider_filter_container', children=[
-            dcc.RangeSlider(
-                id='slider_filter',
-                step=0.5,
-                allowCross=False,
-                tooltip={"always_visible": False, "placement": "bottom"},
-                updatemode="drag")]),
-        # This is invisible label to fill radio items with background
-        html.Div(id="flip_button_container", children=[
-            html.Button("Flip", id="flip_button", n_clicks=0)
-        ]),
-        html.Label("Filler", id="filler")
-        ])
-
-])
+app.layout = generate_layout(df)
 
 
 
@@ -123,23 +61,6 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
         fig.update_traces(marker={"color": color_value})
 
     return fig
-
-# This callback needs to be updated
-# The initial idea was to make the dropdown single if another dropdown is multiple
-# But this creates complcations in the input since multiple dropdowns provide lists as outputs and single provide strings
-# So for now this callback only returns True, True making both dropdowns multipls
-# Maybe we can use this later
-@app.callback(
-    Output('dropdown_x', 'multi'),
-    Output('dropdown_y', 'multi'),
-    Input('dropdown_x', 'value'),
-    Input('dropdown_y', 'value'))
-def on_exit(value_x, value_y):
-    """if isinstance(value_x, list) and len(value_x) > 1:
-        return (True, True)    
-    elif value_y != None and isinstance(value_y, list) and len(value_y) > 1:
-        return (True, True)"""
-    return (True, True)
 
 
 # This callback is used to change the options avaliable in the dropdowns (e.g. histogram allows only for x asix entries)
