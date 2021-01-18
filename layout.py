@@ -24,7 +24,10 @@ def generate_layout(df):
                     ]),
                 
                 # Main panel container
-                html.Div(id='main_panel', children=[dcc.Graph(id='main-graph', config={'displayModeBar': False})]),
+                html.Div(id='main_panel', children=[
+                    dcc.Graph(id='main-graph', config={'displayModeBar': False}),
+                    dcc.Graph(id='second-graph', config={'displayModeBar': False}),
+                    ]),
 
                 # Side panel container
                 html.Div(id='side_panel', children=[
@@ -60,6 +63,13 @@ def generate_layout(df):
                     # This is invisible label to fill radio items with background
                     html.Div(id="flip_button_container", children=[
                         html.Button("Flip", id="flip_button", n_clicks=0)
+                    ]),
+                    html.Label("Clustering", id="cluster_label"),
+                    html.Div(id="cluster_dropdown_container", children=[
+                        dcc.Dropdown(id="cluster_dropdown", value=None)
+                    ]),
+                    html.Div(id='input_cluster_container', children=[
+                        dcc.Input(id="input_cluster", type="number", placeholder="n", min=1)
                     ]),
                     html.Label("Filler", id="filler")
                     ])

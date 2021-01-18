@@ -4,26 +4,30 @@ import pandas as pd
 import numpy as np
 from graph_generation.graph_generation import generate_graph
 from graph_generation.interaction import filter_data, select, flip_axes
+from graph_generation.exploration import cluster
 from layout import generate_layout
 
 
 # Read the data
 df = pd.read_excel('data/dataset.xlsx').dropna(how="all", axis=1)
+df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
+df['cluster'] = 0
+
+df['cluster'] = cluster(df, "Red blood Cells", 3)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVID-19 Visualization Tool")
-
 
 
 # This declares the app's layout
 app.layout = generate_layout(df)
 
 
-
 # This callback is used to update the graph based on the chosen attribtes and graph types
 @app.callback(
     Output('main-graph', 'figure'),
+    Output('second-graph', 'figure'),
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'),
     Input('radio_graph_type', 'value'),
@@ -32,8 +36,11 @@ app.layout = generate_layout(df)
     Input("dropdown_filter", "value"),
     Input('main-graph', 'selectedData'),
     Input('color_dropdown', 'value'),
-    Input("flip_button", "n_clicks"))
-def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value):
+    Input("flip_button", "n_clicks"),
+    Input("cluster_dropdown", "value"),
+    Input("input_cluster", "value"))
+def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value, cluster_value, n_clusters):
+    fig2 = generate_graph(df, x=[], y=[])
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
@@ -49,6 +56,13 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
     # Filter the data based on the filter values
     data = filter_data(df, value_filter_dropdown, value_filter_slider)
 
+    # Cluster
+    if cluster_value != None and n_clusters != None and graph_type == "scatter":
+        data['Cluster'] = cluster(data, cluster_value, n_clusters)
+        data['Cluster'] = data['Cluster'].astype(str)
+        opts["color"] = data['Cluster']
+        fig2 = generate_graph(data, x=cluster_value, graph_type="box")
+
     # Generate graph
     selected_points = list(data[data['select'] == True].index)
     fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type=graph_type, selected_points=selected_points, **opts)
@@ -60,7 +74,7 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
     if color_value != None:
         fig.update_traces(marker={"color": color_value})
 
-    return fig
+    return (fig, fig2)
 
 
 # This callback is used to change the options avaliable in the dropdowns (e.g. histogram allows only for x asix entries)
@@ -128,7 +142,26 @@ def adjust_filter_slider(value):
             Input("dropdown_filter", "value"),
             Input("slider_filter", "value"))
 def clear_data(n_clicks, option, filter, range):
+    """ Clear the selected data on state change """
     return None
+
+
+@app.callback(Output("cluster_dropdown", "options"),
+            Input('dropdown_x', 'value'),
+            Input('dropdown_y', 'value'))
+def clustring_options(x_value, y_value):
+    """ Generate clustering options """
+    values = x_value + y_value
+    return ([{'label': value, 'value': value} for value in values])
+
+
+@app.callback(Output("second-graph", "style"),
+            Input('cluster_dropdown', 'value'),
+            Input('input_cluster', 'value'))
+def show_second_graph(variable, n_clusters):
+    if variable != None and n_clusters != None:
+        if n_clusters > 1:
+            return {"display": "block"}
 
 
 if __name__ == '__main__':

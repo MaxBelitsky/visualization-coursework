@@ -29,6 +29,9 @@ def generate_graph(data, x="Red blood Cells", y="Paletes", graph_type='scatter',
 
         return generate_scatter(melted, x, y, "wide")
 
+    elif graph_type=="box":
+        return generate_box_plot(data, x, "long", **kwargs)
+
 
 ################################### HISTOGRAM ###################################
 
@@ -121,3 +124,10 @@ def generate_scatter_matrix(data, x, y, data_format="long", **kwargs):
     if data_format == "long":
         dimensions = x + y
         return px.scatter_matrix(data, dimensions=dimensions, **kwargs)
+
+
+################################### BOX PLOT ###################################
+
+def generate_box_plot(data, y, data_format="long", **kwargs):
+    if data_format == "long":
+        return px.box(data, y=y, color=data['Cluster'])
