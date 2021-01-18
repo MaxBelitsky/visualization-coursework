@@ -12,9 +12,6 @@ from layout import generate_layout
 df = pd.read_excel('data/dataset.xlsx').dropna(how="all", axis=1)
 df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
-df['cluster'] = 0
-
-df['cluster'] = cluster(df, "Red blood Cells", 3)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVID-19 Visualization Tool")
