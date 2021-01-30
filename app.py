@@ -12,6 +12,11 @@ from layout import generate_layout
 df = pd.read_excel('data/dataset.xlsx').dropna(how="all", axis=1)
 df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
+covid_one_hot = df['SARS-Cov-2 exam result'].to_numpy()
+covid_one_hot = np.where(covid_one_hot == 'positive', 1, covid_one_hot)
+covid_one_hot = np.where(covid_one_hot == 'negative', 0, covid_one_hot)
+df["COVID19"] = covid_one_hot
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVID-19 Visualization Tool")
@@ -38,11 +43,15 @@ app.layout = generate_layout(df)
     Input("input_cluster", "value"))
 def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value, cluster_value, n_clusters):
     fig2 = generate_graph(df, x=[], y=[])
+    explore = False     # Indicates if "Explore" option is chosen
     # Create a dictionary with options and then unpack it in the generate_graph() call
     opts = dict()
     for option in options:
         for key, value in eval(option).items():
-            opts[key] = value
+            if key != 'explore':
+                opts[key] = value
+            else:
+                explore = True
 
     # Flip the axes
     x_y = flip_axes(flip_value, opts, graph_type, x, y)
@@ -54,7 +63,7 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
     data = filter_data(df, value_filter_dropdown, value_filter_slider)
 
     # Cluster
-    if cluster_value != None and n_clusters != None and graph_type == "scatter":
+    if cluster_value != None and n_clusters != None and graph_type == "scatter" and explore == True:
         data['Cluster'] = cluster(data, cluster_value, n_clusters)
         data['Cluster'] = data['Cluster'].astype(str)
         opts["color"] = data['Cluster']
@@ -93,15 +102,23 @@ def dynamic_options(graph_type, value_x, value_y):
             return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                    #{'label': 'Select Mode', 'value': '{"color": "select"}'},
+                    {'label': 'Explore Mode', 'value': '{"explore": True}'},
                     {'label': 'Trendline', 'value': '{"trendline": "ols"}'}
                      ])
 
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                     #{'label': 'Select Mode', 'value': '{"color": "select"}'}
                      ])
+
+    elif graph_type == "heatmap":
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [])
+
+    elif graph_type == "par_coords":
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
+        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "Covid"}'}])
 
 
 @app.callback(Output("slider_filter", "min"),
@@ -156,9 +173,24 @@ def clustring_options(x_value, y_value):
             Input('cluster_dropdown', 'value'),
             Input('input_cluster', 'value'))
 def show_second_graph(variable, n_clusters):
+    """ Shows second graph """
     if variable != None and n_clusters != None:
         if n_clusters > 1:
             return {"display": "block"}
+
+
+@app.callback(Output("cluster_dropdown", "style"),
+            Output("input_cluster_container", "style"),
+            Output("cluster_label", "style"),
+            Input('checklist_options', 'value'),
+            Input('radio_graph_type', 'value'))
+def show_clustering_controls(options, graph_type):
+    """ Shows a dropdown and a input field for clustering """
+    for option in options:
+        for key, _ in eval(option).items():
+            if key == 'explore' and graph_type == "scatter":
+                return ({"display": "block"}, {"display": "block"}, {"display": "block"})
+    return ({"display": "none"}, {"display": "none"}, {"display": "none"})
 
 
 if __name__ == '__main__':

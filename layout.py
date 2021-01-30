@@ -35,8 +35,9 @@ def generate_layout(df):
                     dcc.RadioItems(
                         id='radio_graph_type',
                         options=[{'label': 'Histogram', 'value': 'histogram'}, 
-                                #{'label': 'Bar plot', 'value': 'bar'}, 
-                                {'label': 'Scatter plot', 'value': 'scatter'}],
+                                {'label': 'Scatter plot', 'value': 'scatter'},
+                                {'label': 'Heatmap', 'value': 'heatmap'},
+                                {'label': 'Parallel Coords', 'value': 'par_coords'}],
                         value='scatter',
                         ),
                     html.Label("Options", id="label_options"),

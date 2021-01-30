@@ -32,6 +32,14 @@ def generate_graph(data, x="Red blood Cells", y="Paletes", graph_type='scatter',
     elif graph_type=="box":
         return generate_box_plot(data, x, "long", **kwargs)
 
+    elif graph_type=="heatmap":
+        if len(x) > 0 and len(y) > 0:
+            return generate_heatmap(data, x, y, "long", **kwargs)
+        return go.Figure()
+
+    elif graph_type=="par_coords":
+        return generate_parallel_coords(data, x, y, "long", **kwargs)
+
 
 ################################### HISTOGRAM ###################################
 
@@ -131,3 +139,21 @@ def generate_scatter_matrix(data, x, y, data_format="long", **kwargs):
 def generate_box_plot(data, y, data_format="long", **kwargs):
     if data_format == "long":
         return px.box(data, y=y, color=data['Cluster'])
+
+
+################################### HEATMAP ###################################
+
+
+def generate_heatmap(data, x, y, data_format="long", **kwargs):
+    if data_format == "long":
+        # TODO Add aggregation
+        return px.density_heatmap(data, x=x[0], y=y[0])
+
+
+################################### PARALLEL COORDINATES ##########################
+
+
+def generate_parallel_coords(data, x, y, data_format="long", **kwargs):
+    if data_format == "long":
+        dimensions = x + y
+        return px.parallel_coordinates(data, dimensions=dimensions, **kwargs)
