@@ -81,6 +81,11 @@ body, html{
     height: 650px;
 }
 
+#second-graph{
+    display: none;
+    height: 550px;
+}
+
 /* -------------- SIDE PANEL -------------- */
 
 #side_panel {
@@ -140,6 +145,7 @@ body, html{
 }
 
 #color_label{
+    margin-top: 20px;
     text-align: center;
 }
 
@@ -152,6 +158,32 @@ body, html{
 #color_dropdown{
     font-size : 80%;
     white-space: nowrap; 
+}
+
+
+#cluster_label{
+    text-align: center;
+    
+}
+
+#cluster_dropdown_container{
+    width: 90%;
+    margin: auto;
+    margin-bottom: 10px;
+    
+}
+
+#cluster_dropdown{
+    font-size : 80%;
+    white-space: nowrap;
+}
+
+#input_cluster_container{
+    text-align: center;
+}
+
+#input_cluster{
+    width: 30%;
 }
 
 #filler {
