@@ -118,7 +118,7 @@ def dynamic_options(graph_type, value_x, value_y):
     elif graph_type == "par_coords":
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
-        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "Covid"}'}])
+        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "COVID19"}'}])
 
 
 @app.callback(Output("slider_filter", "min"),
