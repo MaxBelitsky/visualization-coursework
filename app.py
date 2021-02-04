@@ -9,7 +9,7 @@ from layout import generate_layout
 
 
 # Read the data
-df = pd.read_excel('data/dataset.xlsx').dropna(how="all", axis=1)
+df = pd.read_excel('data/dataset.xlsx', engine='openpyxl').dropna(how="all", axis=1)
 df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
 covid_one_hot = df['SARS-Cov-2 exam result'].to_numpy()
@@ -19,11 +19,11 @@ df["COVID19"] = covid_one_hot
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="COVID-19 Visualization Tool")
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, title="ClinVis")
 
 
 # This declares the app's layout
-app.layout = generate_layout(df)
+app.layout = generate_layout(df, app)
 
 
 # This callback is used to update the graph based on the chosen attribtes and graph types
@@ -32,16 +32,16 @@ app.layout = generate_layout(df)
     Output('second-graph', 'figure'),
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'),
+    Input('dropdown_z', 'value'),
     Input('radio_graph_type', 'value'),
     Input('checklist_options', 'value'),
     Input("slider_filter", "value"),
     Input("dropdown_filter", "value"),
     Input('main-graph', 'selectedData'),
-    Input('color_dropdown', 'value'),
     Input("flip_button", "n_clicks"),
     Input("cluster_dropdown", "value"),
     Input("input_cluster", "value"))
-def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, color_value, flip_value, cluster_value, n_clusters):
+def update_figure(x, y, z, graph_type, options, value_filter_slider, value_filter_dropdown, selectedData, flip_value, cluster_value, n_clusters):
     fig2 = generate_graph(df, x=[], y=[])
     explore = False     # Indicates if "Explore" option is chosen
     # Create a dictionary with options and then unpack it in the generate_graph() call
@@ -71,14 +71,14 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
 
     # Generate graph
     selected_points = list(data[data['select'] == True].index)
-    fig = generate_graph(data, x=x_y[0], y=x_y[1], graph_type=graph_type, selected_points=selected_points, **opts)
+    fig = generate_graph(data, x=x_y[0], y=x_y[1], z=z, graph_type=graph_type, selected_points=selected_points, **opts)
 
     # Make the transition smoother
     fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select') #dragmode='select'
     
     # Update the color
-    if color_value != None:
-        fig.update_traces(marker={"color": color_value})
+    #if color_value != None:
+    #    fig.update_traces(marker={"color": color_value})
 
     return (fig, fig2)
 
@@ -87,6 +87,7 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
 @app.callback(
     Output('dropdown_x', 'options'),
     Output('dropdown_y', 'options'),
+    Output('dropdown_z', 'options'),
     Output('checklist_options', 'options'),
     Input('radio_graph_type', 'value'),
     Input('dropdown_x', 'value'),
@@ -94,13 +95,14 @@ def update_figure(x, y, graph_type, options, value_filter_slider, value_filter_d
 def dynamic_options(graph_type, value_x, value_y):
     if graph_type == "histogram":
         # Only numerical values for the X are possible
-        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [{'label': "None", 'value': ''}], [])
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [], [], [])
 
     elif graph_type == "scatter":
         # Only numerical values for both X and Y axes are possible
         if len(value_x) == 1 and len(value_y) == 1:
             return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                    [],
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
                     {'label': 'Explore Mode', 'value': '{"explore": True}'},
                     {'label': 'Trendline', 'value': '{"trendline": "ols"}'}
@@ -108,17 +110,32 @@ def dynamic_options(graph_type, value_x, value_y):
 
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
                     [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
-                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'},
-                     ])
+                    [],
+                    [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
     elif graph_type == "heatmap":
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
-        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [])
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [],
+        [])
 
     elif graph_type == "par_coords":
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
-        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [],
         [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "COVID19"}'}])
+
+    elif graph_type == "strip":
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="object"][1:]],
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [],
+        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
+
+    elif graph_type == "ternary":
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+        [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], 
+        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
 
 @app.callback(Output("slider_filter", "min"),
@@ -191,6 +208,38 @@ def show_clustering_controls(options, graph_type):
             if key == 'explore' and graph_type == "scatter":
                 return ({"display": "block"}, {"display": "block"}, {"display": "block"})
     return ({"display": "none"}, {"display": "none"}, {"display": "none"})
+
+
+@app.callback(Output("dropdown_x_container", "style"),
+                Output("dropdown_y_container", "style"),
+                Output("dropdown_z_container", "style"),
+                Output("x_axis_label", "children"),
+                Output("y_axis_label", "children"),
+                Output("z_axis_label", "children"),
+                Output("flip_button_container", "style"),
+                Input('radio_graph_type', 'value'))
+def adjust_axes(graph_type):
+    if graph_type == "histogram":
+        return ({"width": "46%", "display": "inline-block"}, {"display": "none"}, {"display": "none"}, "Choose variable(s)", "", "", None)
+
+    elif graph_type == "par_coords":
+        return ({"width": "46%", "display": "inline-block"}, {"display": "none"}, {"display": "none"}, "Choose variable(s)", "", "", {"display": "none"})
+
+    elif graph_type in ["scatter", "heatmap", "strip"]:
+        return ({"width": "46%", "display": "inline-block"}, {"width": "46%", "display": "inline-block"}, {"display": "none"}, "Select X Axis", "Select Y Axis", "", None)
+
+    elif graph_type in ["ternary"]:
+        return ({"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'}, {"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'}, {"width": "30%", "display": "inline-block", 'float': 'none'}, "Select X Axis", "Select Y Axis", "Select Z Axis", {"display": "none"})
+
+    return (None, None, None, "", "", "", None)
+
+
+@app.callback(Output('checklist_options', 'value'),
+                Input('radio_graph_type', 'value'),
+                Input('checklist_options', 'options'))
+def clear_options(graph_type, options):
+    """ Clear the options on state change """
+    return []
 
 
 if __name__ == '__main__':

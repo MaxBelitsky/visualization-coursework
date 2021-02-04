@@ -1,6 +1,7 @@
 # Personal assignments
 personal_assignment
 todo.txt
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

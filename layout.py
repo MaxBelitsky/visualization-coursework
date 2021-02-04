@@ -2,12 +2,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 
-def generate_layout(df):
+def generate_layout(df, app):
     layout = html.Div(id="main", children=[
                 html.Div(id="head", children=[
-                    html.H1(children='COVID-19 Visualization Tool', id="h1"),
+                    html.Div(id="logo", children=[
+                        html.Img(src=app.get_asset_url('logo.jpeg'), style={'height':'5%', 'width':'10%'})
+                    ]),
                     html.Div(children='''
-                    This tool is intended to visualize COVID-19 data.
+                    A tool intended to visualize clinical data.
                 ''', id="description")]),
 
                 # Dropdown panel container
@@ -20,6 +22,11 @@ def generate_layout(df):
                     html.Div(id="dropdown_y_container", children=[
                         html.Label("Select Y Axis", id="y_axis_label"),
                         dcc.Dropdown(id='dropdown_y', value=['Platelets'], multi=True)]
+                        ),
+
+                    html.Div(id="dropdown_z_container", children=[
+                        html.Label("Select Z Axis", id="z_axis_label"),
+                        dcc.Dropdown(id='dropdown_z', value=['Leukocytes'], multi=True)]
                         )
                     ]),
                 
@@ -37,7 +44,9 @@ def generate_layout(df):
                         options=[{'label': 'Histogram', 'value': 'histogram'}, 
                                 {'label': 'Scatter plot', 'value': 'scatter'},
                                 {'label': 'Heatmap', 'value': 'heatmap'},
-                                {'label': 'Parallel Coords', 'value': 'par_coords'}],
+                                {'label': 'Parallel Coords', 'value': 'par_coords'},
+                                {'label': 'Strip', 'value': 'strip'},
+                                {'label': 'Ternary', 'value': 'ternary'}],
                         value='scatter',
                         ),
                     html.Label("Options", id="label_options"),
@@ -46,10 +55,10 @@ def generate_layout(df):
                         options=[],
                         value=[],
                         ),
-                    html.Label("Color", id="color_label"),
-                    html.Div(id="color_dropdown_container", children=[
-                        dcc.Dropdown(id="color_dropdown", value=None, options=[{'label': "Green", 'value': "green"}])
-                    ]),
+                    #html.Label("Color", id="color_label"),
+                    #html.Div(id="color_dropdown_container", children=[
+                    #    dcc.Dropdown(id="color_dropdown", value=None, options=[{'label': "Green", 'value': "green"}])
+                    #]),
                     html.Label("Filter", id="label_filter"),
                     html.Div(id='dropdown_filter_container', children=[
                         dcc.Dropdown(id='dropdown_filter', value=None, options=[{'label': value, 'value': value} for value in df.columns[1:]]),
@@ -61,7 +70,6 @@ def generate_layout(df):
                             allowCross=False,
                             tooltip={"always_visible": False, "placement": "bottom"},
                             updatemode="drag")]),
-                    # This is invisible label to fill radio items with background
                     html.Div(id="flip_button_container", children=[
                         html.Button("Flip", id="flip_button", n_clicks=0)
                     ]),
@@ -72,6 +80,7 @@ def generate_layout(df):
                     html.Div(id='input_cluster_container', children=[
                         dcc.Input(id="input_cluster", type="number", placeholder="n", min=1)
                     ]),
+                    # This is invisible label to fill radio items with background
                     html.Label("Filler", id="filler")
                     ])
 
