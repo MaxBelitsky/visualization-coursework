@@ -7,7 +7,7 @@ import plotly.io as pio
 pio.templates.default = "plotly_white"
 
 
-def generate_graph(data, x="Red blood Cells", y="Paletes", graph_type='scatter', selected_points=[], *args, **kwargs):
+def generate_graph(data, x="Red blood Cells", y="Paletes", z="Leukocytes", graph_type='scatter', selected_points=[], *args, **kwargs):
     """ Generates and returns a graph with the specified arguments """
 
     # Return an empty figure if the input is empty
@@ -39,6 +39,16 @@ def generate_graph(data, x="Red blood Cells", y="Paletes", graph_type='scatter',
 
     elif graph_type=="par_coords":
         return generate_parallel_coords(data, x, y, "long", **kwargs)
+
+    elif graph_type=="strip":
+        if len(x) > 0 and len(y) > 0:
+            return generate_strip(data, x, y, "long", **kwargs)
+        return go.Figure()
+
+    elif graph_type=="ternary":
+        if len(x) > 0 and len(y) > 0 and len(z) > 0:
+            return generate_ternary(data, x, y, z, "long", **kwargs)
+        return go.Figure()
 
 
 ################################### HISTOGRAM ###################################
@@ -155,5 +165,20 @@ def generate_heatmap(data, x, y, data_format="long", **kwargs):
 
 def generate_parallel_coords(data, x, y, data_format="long", **kwargs):
     if data_format == "long":
-        dimensions = x + y
-        return px.parallel_coordinates(data, dimensions=dimensions, **kwargs)
+        return px.parallel_coordinates(data, dimensions=x, **kwargs)
+
+
+################################### STRIP ##########################
+
+
+def generate_strip(data, x, y, data_format="long", **kwargs):
+    if data_format == "long":
+        return px.strip(data, x=x[0], y=y[0], **kwargs)
+
+
+################################### TERNARY ##########################
+
+
+def generate_ternary(data, x, y, z, data_format="long", **kwargs):
+    if data_format == "long":
+        return px.scatter_ternary(data, a=x[0], b=y[0], c=z[0], **kwargs)

@@ -4,7 +4,6 @@ body, html{
   }
 
 #head {
-    background-color: lightsalmon;
     padding-bottom: 2%;
 
 }
@@ -18,12 +17,16 @@ body, html{
     text-align: center;
 }
 
+#logo {
+    text-align: center;
+}
+
 /* -------------- DROPDOWN PANEL -------------- */
 
 #dropdown_panel {
-    margin-top: 1px;
+    margin-top: 0px;
     border-width: thin;
-    border-top: 0px;
+    
     padding-top: 10px;
     padding-bottom: 10px;
     padding-right: 10px;
@@ -41,6 +44,12 @@ body, html{
 }
 
 #y_axis_label {
+    text-align: left;
+    margin-bottom: 10px; 
+    font-size: 16px;
+}
+
+#z_axis_label {
     text-align: left;
     margin-bottom: 10px; 
     font-size: 16px;
@@ -67,6 +76,12 @@ body, html{
 #dropdown_y_container {
     width: 46%;
     float: right;
+}
+
+#dropdown_z_container {
+    width: 46%;
+    display: none;
+    float:inline-end;
 }
 
 /* -------------- MAIN PANEL -------------- */
