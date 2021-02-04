@@ -55,10 +55,6 @@ def generate_layout(df, app):
                         options=[],
                         value=[],
                         ),
-                    #html.Label("Color", id="color_label"),
-                    #html.Div(id="color_dropdown_container", children=[
-                    #    dcc.Dropdown(id="color_dropdown", value=None, options=[{'label': "Green", 'value': "green"}])
-                    #]),
                     html.Label("Filter", id="label_filter"),
                     html.Div(id='dropdown_filter_container', children=[
                         dcc.Dropdown(id='dropdown_filter', value=None, options=[{'label': value, 'value': value} for value in df.columns[1:]]),

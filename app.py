@@ -1,5 +1,5 @@
 import dash
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import numpy as np
 from graph_generation.graph_generation import generate_graph
@@ -12,10 +12,7 @@ from layout import generate_layout
 df = pd.read_excel('data/dataset.xlsx', engine='openpyxl').dropna(how="all", axis=1)
 df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
-covid_one_hot = df['SARS-Cov-2 exam result'].to_numpy()
-covid_one_hot = np.where(covid_one_hot == 'positive', 1, covid_one_hot)
-covid_one_hot = np.where(covid_one_hot == 'negative', 0, covid_one_hot)
-df["COVID19"] = covid_one_hot
+df["COVID-19"] = pd.get_dummies(df['SARS-Cov-2 exam result'], drop_first=True)
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -53,7 +50,7 @@ def update_figure(x, y, z, graph_type, options, value_filter_slider, value_filte
             else:
                 explore = True
 
-    # Flip the axes
+    # Flip the axes if the "Flip" button is pressed
     x_y = flip_axes(flip_value, opts, graph_type, x, y)
 
     # Select points
@@ -74,16 +71,12 @@ def update_figure(x, y, z, graph_type, options, value_filter_slider, value_filte
     fig = generate_graph(data, x=x_y[0], y=x_y[1], z=z, graph_type=graph_type, selected_points=selected_points, **opts)
 
     # Make the transition smoother
-    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select') #dragmode='select'
-    
-    # Update the color
-    #if color_value != None:
-    #    fig.update_traces(marker={"color": color_value})
+    fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
 
     return (fig, fig2)
 
 
-# This callback is used to change the options avaliable in the dropdowns (e.g. histogram allows only for x asix entries)
+# This callback is used to change the options avaliable in the dropdowns
 @app.callback(
     Output('dropdown_x', 'options'),
     Output('dropdown_y', 'options'),
@@ -93,6 +86,8 @@ def update_figure(x, y, z, graph_type, options, value_filter_slider, value_filte
     Input('dropdown_x', 'value'),
     Input('dropdown_y', 'value'))
 def dynamic_options(graph_type, value_x, value_y):
+    """ Generate options for the input dropdowns based on the graph type """
+
     if graph_type == "histogram":
         # Only numerical values for the X are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [], [], [])
@@ -126,7 +121,7 @@ def dynamic_options(graph_type, value_x, value_y):
         [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "COVID19"}'}])
 
     elif graph_type == "strip":
-        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="object"][1:]],
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="int64"].to_list()+df.columns[df.dtypes=="object"][1:].to_list()],
         [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [],
         [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
@@ -145,17 +140,27 @@ def dynamic_options(graph_type, value_x, value_y):
               Output("slider_filter", "step"),
               Input("dropdown_filter", "value"))
 def adjust_filter_slider(value):
+    """ Adjust the ranges of the filtering slider based on the variable type """
+
     if value != None:
         if df[value].dtypes == "float64":
             maximum = df.max()[value]
             minimum = df.min()[value]
             middle = minimum + (maximum - minimum)/2
-            return (minimum, maximum, {minimum: "{:.1f}".format(minimum), middle: "{:.1f}".format(middle), maximum: "{:.1f}".format(maximum)}, [minimum, maximum], 0.1)
+            return (minimum,
+                    maximum,
+                    {minimum: "{:.1f}".format(minimum), middle: "{:.1f}".format(middle), maximum: "{:.1f}".format(maximum)},
+                    [minimum, maximum],
+                    0.1)
 
         elif df[value].dtypes == "int64":
             maximum = int(df.max()[value])
             minimum = int(df.min()[value])
-            return [minimum, maximum, {minimum: "{}".format(minimum), maximum: "{}".format(maximum)}, [minimum, maximum], 1]
+            return (minimum,
+                    maximum,
+                    {minimum: "{}".format(minimum), maximum: "{}".format(maximum)},
+                    [minimum, maximum],
+                    1)
 
         elif df[value].dtypes == "object":
             length = len(df[value].dropna().unique()) - 1
@@ -182,17 +187,20 @@ def clear_data(n_clicks, option, filter, range):
             Input('dropdown_y', 'value'))
 def clustring_options(x_value, y_value):
     """ Generate clustering options """
+
     values = x_value + y_value
     return ([{'label': value, 'value': value} for value in values])
 
 
 @app.callback(Output("second-graph", "style"),
             Input('cluster_dropdown', 'value'),
-            Input('input_cluster', 'value'))
-def show_second_graph(variable, n_clusters):
+            Input('input_cluster', 'value'),
+            Input('checklist_options', 'value'))
+def show_second_graph(variable, n_clusters, options):
     """ Shows second graph """
-    if variable != None and n_clusters != None:
-        if n_clusters > 1:
+
+    if any("explore" in option for option in options):
+        if variable != None and n_clusters != None and n_clusters > 1:
             return {"display": "block"}
 
 
@@ -203,10 +211,9 @@ def show_second_graph(variable, n_clusters):
             Input('radio_graph_type', 'value'))
 def show_clustering_controls(options, graph_type):
     """ Shows a dropdown and a input field for clustering """
-    for option in options:
-        for key, _ in eval(option).items():
-            if key == 'explore' and graph_type == "scatter":
-                return ({"display": "block"}, {"display": "block"}, {"display": "block"})
+
+    if any("explore" in option for option in options) and graph_type == "scatter":
+        return ({"display": "block"}, {"display": "block"}, {"display": "block"})
     return ({"display": "none"}, {"display": "none"}, {"display": "none"})
 
 
@@ -218,28 +225,52 @@ def show_clustering_controls(options, graph_type):
                 Output("z_axis_label", "children"),
                 Output("flip_button_container", "style"),
                 Input('radio_graph_type', 'value'))
-def adjust_axes(graph_type):
+def adjust_dropdowns(graph_type):
+    """ Dynamically adjust the input dropdowns based on the graph type """
+
     if graph_type == "histogram":
-        return ({"width": "46%", "display": "inline-block"}, {"display": "none"}, {"display": "none"}, "Choose variable(s)", "", "", None)
+        return ({"width": "46%", "display": "inline-block"},
+                {"display": "none"}, {"display": "none"},
+                "Choose variable(s)",
+                "",
+                "",
+                None)
 
     elif graph_type == "par_coords":
-        return ({"width": "46%", "display": "inline-block"}, {"display": "none"}, {"display": "none"}, "Choose variable(s)", "", "", {"display": "none"})
+        return ({"width": "46%", "display": "inline-block"},
+                {"display": "none"}, {"display": "none"},
+                "Choose variable(s)",
+                "",
+                "",
+                {"display": "none"})
 
     elif graph_type in ["scatter", "heatmap", "strip"]:
-        return ({"width": "46%", "display": "inline-block"}, {"width": "46%", "display": "inline-block"}, {"display": "none"}, "Select X Axis", "Select Y Axis", "", None)
+        return ({"width": "46%", "display": "inline-block"},
+                {"width": "46%", "display": "inline-block"},
+                {"display": "none"},
+                "Select X Axis",
+                "Select Y Axis",
+                "",
+                None)
 
-    elif graph_type in ["ternary"]:
-        return ({"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'}, {"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'}, {"width": "30%", "display": "inline-block", 'float': 'none'}, "Select X Axis", "Select Y Axis", "Select Z Axis", {"display": "none"})
+    elif graph_type == "ternary":
+        return ({"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'},
+                {"width": "30%", "display": "inline-block", 'float': 'none', 'margin-right': '5%'},
+                {"width": "30%", "display": "inline-block", 'float': 'none'},
+                "Select X Axis",
+                "Select Y Axis",
+                "Select Z Axis",
+                {"display": "none"})
 
     return (None, None, None, "", "", "", None)
 
 
 @app.callback(Output('checklist_options', 'value'),
-                Input('radio_graph_type', 'value'),
-                Input('checklist_options', 'options'))
-def clear_options(graph_type, options):
-    """ Clear the options on state change """
-    return []
+                Output("flip_button", "n_clicks"),
+                Input('radio_graph_type', 'value'))
+def clear_options(graph_type):
+    """ Clear the options and reset the flip button on state change """
+    return ([], 0)
 
 
 if __name__ == '__main__':

@@ -141,7 +141,9 @@ def generate_scatter(data, x, y, data_format="wide", selected_points=[], **kwarg
 def generate_scatter_matrix(data, x, y, data_format="long", **kwargs):
     if data_format == "long":
         dimensions = x + y
-        return px.scatter_matrix(data, dimensions=dimensions, **kwargs)
+        fig = px.scatter_matrix(data, dimensions=dimensions, **kwargs)
+        fig.update_traces(diagonal_visible=False)
+        return fig
 
 
 ################################### BOX PLOT ###################################
