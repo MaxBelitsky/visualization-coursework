@@ -3,6 +3,7 @@
 # Environment setup
 
 Create a python virtual envirnonment with `python -m venv venv`.
+Upgrade the pip using `pip install --upgrade pip`.
 
 Activate the environment with `venv\Scripts\activate.bat` on Windows or `source venv/bin/activate` on Mac or Linux.
 
