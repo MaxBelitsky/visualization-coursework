@@ -10,6 +10,7 @@ from layout import generate_layout
 
 # Read the data
 df = pd.read_excel('data/dataset.xlsx', engine='openpyxl').dropna(how="all", axis=1)
+# Preprocess the data
 df = df.iloc[df["Red blood Cells"].dropna().index, :]
 df['select'] = False
 df["COVID-19"] = pd.get_dummies(df['SARS-Cov-2 exam result'], drop_first=True)
@@ -70,7 +71,7 @@ def update_figure(x, y, z, graph_type, options, value_filter_slider, value_filte
     selected_points = list(data[data['select'] == True].index)
     fig = generate_graph(data, x=x_y[0], y=x_y[1], z=z, graph_type=graph_type, selected_points=selected_points, **opts)
 
-    # Make the transition smoother
+    # Make the transition smoother and change the background to white
     fig.update_layout(transition_duration=50, paper_bgcolor='rgba(0,0,0,0)', clickmode='event+select')
 
     return (fig, fig2)
@@ -90,7 +91,15 @@ def dynamic_options(graph_type, value_x, value_y):
 
     if graph_type == "histogram":
         # Only numerical values for the X are possible
-        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]], [], [], [])
+        if len(value_x) > 1:
+            return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                    [],
+                    [],
+                    [])
+        return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
+                [],
+                [],
+                [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
     elif graph_type == "scatter":
         # Only numerical values for both X and Y axes are possible
@@ -109,18 +118,21 @@ def dynamic_options(graph_type, value_x, value_y):
                     [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "SARS-Cov-2 exam result"}'}])
 
     elif graph_type == "heatmap":
+        # Only numerical values for both X and Y axes are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [],
         [])
 
     elif graph_type == "par_coords":
+        # Only numerical values for X axis are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [],
-        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "COVID19"}'}])
+        [{'label': 'SARS-Cov-2 test result', 'value': '{"color": "COVID-19"}'}])
 
     elif graph_type == "strip":
+        # Both numerical and categorical values X and Y respectively axes are possible
         return ([{'label': value, 'value': value} for value in df.columns[df.dtypes=="int64"].to_list()+df.columns[df.dtypes=="object"][1:].to_list()],
         [{'label': value, 'value': value} for value in df.columns[df.dtypes=="float"]],
         [],

@@ -18,7 +18,11 @@ def generate_graph(data, x="Red blood Cells", y="Paletes", z="Leukocytes", graph
     melted = pd.melt(data, value_vars=data.columns)
 
     if graph_type=="histogram":
-        return generate_histogram(melted, x, y, "wide", **kwargs)
+        if len(x) > 1:
+            return generate_histogram(melted, x, y, "wide", **kwargs)
+        elif len(x) == 0:
+            return go.Figure()
+        return generate_histogram(data, x, y, "long", **kwargs)
 
     elif graph_type=="scatter":
         if len(x) == 1 and len(y) == 1:
@@ -78,11 +82,21 @@ def generate_histogram(data, x, y, data_format="wide", orientation='v', **kwargs
             )
         # Make the histograms visible if they overlap
         fig.update_layout(barmode='overlay', xaxis_title="Value", yaxis_title="Frequency")
+        if orientation == "h":
+            fig.update_layout(xaxis_title="Frequency", yaxis_title="Value")
         fig.update_traces(opacity=0.8)
         return fig
     
     elif data_format == "long":
-        return px.histogram(data, x, y, **kwargs)
+        if orientation == "h":
+            fig = px.histogram(data, y=x, **kwargs)
+            fig.update_layout(barmode='overlay', xaxis_title="Frequency", yaxis_title="Value")
+
+        else:
+            fig = px.histogram(data, x=x, **kwargs)
+            fig.update_layout(barmode='overlay', xaxis_title="Value", yaxis_title="Frequency")
+        
+        return fig
 
 
 ################################### SCATTER PLOT ###################################
